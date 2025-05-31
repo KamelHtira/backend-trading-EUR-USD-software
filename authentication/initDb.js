@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const User = require("./models/User");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 
 async function initializeAdmin() {
   try {
@@ -41,5 +41,3 @@ async function initializeAdmin() {
 
 // Run the initialization
 initializeAdmin();
-
-module.exports = { initializeAdmin };

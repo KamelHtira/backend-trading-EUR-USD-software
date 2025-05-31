@@ -11,7 +11,7 @@ A Node.js-based automated trading bot for Forex markets, specifically focused on
 - **Real-time Market Data**: Uses Twelve Data API for EUR/USD prices
 - **ML Predictions**: Integrates with ML model for price predictions
 - **User Management**: Supports multiple users with individual balances
-- **Admin Dashboard**: Special admin user with $100,000 initial balance (created automatically on server start)
+- **Admin Dashboard**: Special admin user with $100,000 initial balance
 - **Trade History**: Tracks all trades with timestamps and profit/loss
 - **API Documentation**: Swagger UI for API documentation
 
@@ -37,16 +37,7 @@ cd ForexTradingBotServer
 pnpm install
 ```
 
-3. Create a `.env` file in the root directory with the following variables:
-
-```
-PORT=3000
-MONGODB_URI=mongodb://localhost:27017/forexbot
-JWT_SECRET=your_jwt_secret
-TWELVE_DATA_API_KEY=your_api_key
-```
-
-4. Start the server:
+3. Start the server:
 
 ```bash
 pnpm start
@@ -54,8 +45,8 @@ pnpm start
 
 The server will automatically create an admin user with the following credentials:
 
-- Username: admin
-- Password: admin
+- Username: `admin`
+- Password: `admin`
 - Initial Balance: $100,000
 
 For development with auto-reload:
