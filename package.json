@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "nodemon": "nodemon server.js"
+    "nodemon": "nodemon server.js",
+    "init-admin": "node authentication/initDb.js"
   },
   "keywords": [],
   "author": "",

@@ -127,6 +127,48 @@ function getRandomCloseTime() {
   return Math.floor(Math.random() * (30 - 5 + 1)) + 5;
 }
 
+// Helper function to get latest market price
+async function getLatestPrice() {
+  const options = {
+    method: "GET",
+    hostname: "api.twelvedata.com",
+    path: "/time_series?apikey=4ee0f7ad203a47b9a6874f04725a69a4&interval=1min&symbol=EUR/USD&outputsize=1",
+  };
+
+  return new Promise((resolve, reject) => {
+    const req = https.request(options, (response) => {
+      const chunks = [];
+      response.on("data", (chunk) => chunks.push(chunk));
+      response.on("end", () => {
+        const body = Buffer.concat(chunks);
+        const data = JSON.parse(body.toString());
+
+        if (data.code === 429) {
+          reject(new Error("Rate limit hit"));
+          return;
+        }
+
+        if (
+          !data ||
+          !data.values ||
+          !Array.isArray(data.values) ||
+          data.values.length === 0
+        ) {
+          reject(new Error("Invalid data format received from API"));
+          return;
+        }
+
+        const latestPrice = parseFloat(data.values[0].close);
+        resolve(latestPrice);
+      });
+      response.on("error", reject);
+    });
+
+    req.on("error", reject);
+    req.end();
+  });
+}
+
 // Bot trading logic
 async function runBot(userId) {
   if (activeBots.has(userId)) {
@@ -150,12 +192,23 @@ async function runBot(userId) {
 
       // Check if we can open new positions (max 10)
       if (openPositions.length < MAX_OPEN_POSITIONS && canMakeTrade(userId)) {
+        // Get user balance
+        const user = await User.findById(userId);
+        const tradeAmount = user.balance * 0.01; // Use 1% of balance per trade
+
+        // Check if user has enough balance
+        if (tradeAmount <= 0) {
+          console.log(`User ${userId} has insufficient balance`);
+          bot.timeout = setTimeout(() => runBot(userId), MIN_REQUEST_INTERVAL);
+          return;
+        }
+
         // Determine trade direction
         const side = currentPrice > avgPrediction ? "SELL" : "BUY";
 
-        // Get user balance
-        const user = await User.findById(userId);
-        const tradeAmount = user.balance * 0.1; // Use 10% of balance per trade
+        // Deduct balance from user
+        user.balance -= tradeAmount;
+        await user.save();
 
         // Open new position
         const position = new Activity({
@@ -164,18 +217,52 @@ async function runBot(userId) {
           side,
           type: "MARKET",
           amount: tradeAmount,
+          price: currentPrice,
+          total: tradeAmount,
           status: "NEW",
           isOpen: true,
+          openedAt: new Date(),
         });
 
         await position.save();
 
         // Schedule position close
+        const closeTime = getRandomCloseTime() * 1000;
         setTimeout(async () => {
-          position.isOpen = false;
-          position.status = "CANCELED";
-          await position.save();
-        }, getRandomCloseTime() * 1000);
+          try {
+            // Get latest price
+            const latestPrice = await getLatestPrice();
+
+            // Calculate profit/loss
+            let profit;
+            if (side === "BUY") {
+              profit = (latestPrice - position.price) * position.amount;
+            } else {
+              profit = (position.price - latestPrice) * position.amount;
+            }
+
+            // Update position
+            position.isOpen = false;
+            position.status = "CANCELED";
+            position.closedAt = new Date();
+            position.duration = Math.floor(
+              (position.closedAt - position.openedAt) / 1000
+            );
+            position.profit = profit;
+            await position.save();
+
+            // Update user balance with profit/loss
+            const user = await User.findById(userId);
+            user.balance += profit;
+            await user.save();
+
+            console.log(
+              `Position closed for user ${userId}. Profit: ${profit}`
+            );
+          } catch (error) {
+            console.error(`Error closing position for user ${userId}:`, error);
+          }
+        }, closeTime);
       }
 
       // Schedule next iteration with increased delay
