@@ -17,7 +17,7 @@ app.use(express.json());
 
 // MongoDB connection
 mongoose
-  .connect("mongodb://localhost:27017/forexbot")
+  .connect("mongodb+srv://kamel:kamel@cluster0.wejj0ir.mongodb.net/trading")
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
