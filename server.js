@@ -6,6 +6,8 @@ const cors = require("cors");
 const authRoutes = require("./authentication/routes/authRoutes");
 const accountRoutes = require("./authentication/routes/accountRoutes");
 const botRoutes = require("./authentication/routes/botRoutes");
+const { initializeAdmin } = require("./authentication/initDb");
+const swaggerDocument = require("./swagger.json");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -15,11 +17,24 @@ app.use(cors());
 // Middleware to parse JSON bodies
 app.use(express.json());
 
+// Swagger documentation
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
 // MongoDB connection
 mongoose
-  .connect("mongodb+srv://kamel:kamel@cluster0.wejj0ir.mongodb.net/trading")
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error("MongoDB connection error:", err));
+  .connect(process.env.MONGODB_URI || "mongodb://localhost:27017/forexbot", {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(async () => {
+    console.log("Connected to MongoDB");
+    // Initialize admin user after successful database connection
+    await initializeAdmin();
+  })
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+    process.exit(1);
+  });
 
 // Swagger configuration
 const swaggerOptions = {
@@ -63,6 +78,12 @@ app.use("/bot", botRoutes);
 // Root route
 app.get("/", (req, res) => {
   res.send("Hello World!");
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: "Something went wrong!" });
 });
 
 app.listen(PORT, () => {

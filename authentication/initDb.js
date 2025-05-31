@@ -1,11 +1,13 @@
 const mongoose = require("mongoose");
 const User = require("./models/User");
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcrypt");
 
 async function initializeAdmin() {
   try {
     // Connect to MongoDB
-    await mongoose.connect("mongodb+srv://kamel:kamel@cluster0.wejj0ir.mongodb.net/trading");
+    await mongoose.connect(
+      "mongodb+srv://kamel:kamel@cluster0.wejj0ir.mongodb.net/trading"
+    );
     console.log("Connected to MongoDB");
 
     // Check if admin user exists
@@ -39,3 +41,5 @@ async function initializeAdmin() {
 
 // Run the initialization
 initializeAdmin();
+
+module.exports = { initializeAdmin };
