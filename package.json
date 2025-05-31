@@ -1,0 +1,25 @@
+{
+  "name": "ForexTradingBotServer",
+  "version": "1.0.0",
+  "description": "Express server for Forex Trading Bot",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "nodemon": "nodemon server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.9.0",
+  "dependencies": {
+    "axios": "^1.9.0",
+    "bcrypt": "^5.0.1",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^6.0.0",
+    "swagger-jsdoc": "^6.1.0",
+    "swagger-ui-express": "^4.1.6"
+  }
+}
